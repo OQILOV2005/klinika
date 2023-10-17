@@ -18,15 +18,15 @@ class EmployeeAdmin(UserAdmin):
     )
 
 admin.site.register(models.Employee)
-admin.site.register(models.Forpatient)
+admin.site.register(models.Patient)
 admin.site.register(models.Room)
 admin.site.register(models.Section)
 admin.site.register(models.Operation)
-admin.site.register(models.Info)
+admin.site.register(models.Informations)
 admin.site.register(models.Report)
 admin.site.register(models.Cassa)
 admin.site.register(models.Attendance)
-admin.site.register(models.Forpatient_payment)
+admin.site.register(models.Payment)
 admin.site.register(models.Queue)
 
 
