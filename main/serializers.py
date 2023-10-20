@@ -32,15 +32,15 @@ class OperationSerializers(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class InfoSerializers(serializers.ModelSerializer):
+class InformationsSerializers(serializers.ModelSerializer):
     class Meta:
-        model = Info
+        model = Informations
         fields = "__all__"
 
 
-class ForpatientSerializers(serializers.ModelSerializer):
+class PatientSerializers(serializers.ModelSerializer):
     class Meta:
-        model = Forpatient
+        model = Patient
         fields = "__all__"
 
 
@@ -68,9 +68,9 @@ class QueueSerializers(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class Forpatient_paymentSerializers(serializers.ModelSerializer):
+class PaymentSerializers(serializers.ModelSerializer):
     class Meta:
-        model = Forpatient_payment
+        model =Payment
         fields = "__all__"
 
 

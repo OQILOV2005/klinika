@@ -45,7 +45,7 @@ class Employee(models.Model):
        verbose_name_plural = 'Employee'
 
    def __str__(self):
-        return self.employye.name
+        return self.name
 
 
 class Section(models.Model):
@@ -79,7 +79,7 @@ class Room(models.Model):
         verbose_name_plural = 'Room'
 
     def __str__(self):
-        return self.number
+        return self.name
 
 
 class Patient(models.Model):
@@ -91,16 +91,18 @@ class Patient(models.Model):
             message='Invalid phone number',
             code='invalid_number'
         ), ])
-    photo = models.ImageField(upload_to='patient_photos/',verbose_name='patient photo')
+    photo = models.ImageField(null=True,upload_to='patient_photos/',verbose_name='patient photo')
     gender = models.IntegerField(verbose_name="bemorning' jinsi",blank=False, choices=(
         (1, "Famele"),
         (2, "Male"),
 
     ))
+    diagnos = models.CharField(max_length=30,blank=False)
     day = models.IntegerField(null=True,blank=True,verbose_name="bemorning' qancha kun dovolanishi")
     room = models.ForeignKey(to=Room, on_delete=models.SET_NULL, verbose_name="bemornig' xonasi", null=True, blank=True)
     doctor = models.ForeignKey(to=Employee, on_delete=models.CASCADE,verbose_name="bemornig' doktori")
-    created_at = models.DateTimeField(auto_created=True,verbose_name="bemorning yaratilgan vaqti")
+    created_at = models.DateField(auto_created=True,verbose_name="bemorning yaratilgan vaqti")
+    is_active = models.BooleanField(default=True)
     class Meta:
         verbose_name = 'Patient'
         verbose_name_plural = 'Patient'
@@ -156,11 +158,12 @@ class Report(models.Model):
 
 
 class Queue(models.Model):
-    name = models.CharField(max_length=30)
+    name = models.CharField(max_length=30,blank=False)
     doctor = models.ForeignKey(to=Employee,on_delete=models.CASCADE,verbose_name="bemorning' doktori")
     number = models.IntegerField(verbose_name="navbat raqami")
     description = models.TextField(verbose_name="to'liq malumot ")
-    created_at = models.TimeField(verbose_name="navbat yaratilgan vaqti ")
+    created_at = models.TimeField(auto_now=True,verbose_name="navbat yaratilgan vaqti ")
+
     class Meta:
         verbose_name = 'Queue'
         verbose_name_plural = 'Queue'
