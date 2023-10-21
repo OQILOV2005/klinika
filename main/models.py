@@ -170,8 +170,10 @@ class Queue(models.Model):
 
 
 class Attendance(models.Model):
-    Doctor = models.ForeignKey(to=Employee,on_delete=models.CASCADE,verbose_name= "Davomat uchun doktorni shaxsi ")
-    Status = models.BooleanField(default=False)
+    doctor = models.ForeignKey(to=Employee,on_delete=models.CASCADE,verbose_name= "Davomat uchun doktorni shaxsi ")
+    status = models.BooleanField(default=False)
+    day = models.DateField(auto_now=True)
+
     class Meta:
         verbose_name = 'Attendance'
         verbose_name_plural = 'Attendance'

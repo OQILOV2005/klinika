@@ -91,7 +91,11 @@ urlpatterns = [
     path('patients/search/phone/', views.search_patient_phone),# ishladi
 
     # PATIENT SEARCH NAME API
-    path('patient/search/name/', views.search_patient_name)# ishladi
+    path('patient/search/name/', views.search_patient_name),# ishladi
+
+    path('patient/filter/attendance/',views.filter_attendance_by_status),
+
+    path('patient/filter/attendance_day/', views.filter_attendance_by_status_day)
 ]
 
 

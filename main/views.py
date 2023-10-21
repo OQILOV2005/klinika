@@ -11,8 +11,7 @@ from datetime import datetime
 @api_view(['GET'])
 def filter_patients_created_within_1_days(request):
     current_datetime = datetime.now()
-    start_datetime = current_datetime - timedelta(days=1)
-    patients = Report.objects.filter(created_at__range=(start_datetime, current_datetime))
+    patients = Patient.objects.filter(created_at=current_datetime)
     ser = PatientSerializers(patients, many=True)
     return Response(ser.data)
 
@@ -338,6 +337,7 @@ def search_patient_phone(request):
     phone = request.GET.get('phone')
     patients = Patient.objects.filter(phone__icontains=phone)
     ser = PatientSerializers(patients, many=True)
+    attendance_data = ser.data
     return Response(ser.data)
 
 # END PATIENT SEARCH PHONE API #
@@ -352,3 +352,63 @@ def search_patient_name(request):
     return Response(ser.data)
 
 # END PATIENT  SEARCH NAME  API #
+
+# START ATTENDENCE FILTER STATUS API #
+@api_view(['GET'])
+def filter_attendance_by_status(request):
+        attendance = Attendance.objects.all()
+        ser = AttendanceSerializers(attendance, many=True)
+        attendance_data = ser.data
+        for attendance in attendance_data:
+            status = "Came" if attendance['status'] else "Did not come"
+            attendance.update({
+                "status": status
+            })
+        return Response(ser.data)
+
+# END ATTENDENCE FILTER STATUS API #
+
+# START ATTENDENCE FILTER STATUS API #
+@api_view(['GET'])
+def filter_attendance_by_status_day(request):
+    attendance = Attendance.objects.filter(date=target_date)
+    day = int(day)
+    today = date.today()
+    target_date = today.replace(day=day)
+    ser = AttendanceSerializers(attendance, many=True)
+    attendance.data = ser.data
+    for attendance in attendance_data:
+        attendance['status'] = "Came" if attendance['status'] else "Did not come"
+
+    return Response(ser.data)
+
+
+@api_view(['GET'])
+def filter_attendance_by_status_day_Came(request, day):
+    day = int(day)
+    today = datetime.today()
+    target_date = today.replace(day=day)
+    attendance = Attendance.objects.filter(date=target_date)
+    ser = AttendanceSerializers(attendance, many=True)
+    attendance_data = ser.data
+    for attendance in attendance_data:
+        attendance['status'] = "Came" if attendance['status'] else "Did not come"
+
+    return Response(attendance_data)
+
+@api_view(['GET'])
+def filter_attendance_by_status_day_true_come(request, day):
+        day = int(day)
+        target_date = date.today().replace(day=day)
+        attendance = Attendance.objects.filter(date=target_date, status=True)
+        serializer = AttendanceSerializer(attendance, many=True)
+        return Response(serializer.data)
+
+
+@api_view(['GET'])
+def filter_attendance_by_status_day_false_come(request, day):
+        day = int(day)
+        target_date = date.today().replace(day=day)
+        attendance = Attendance.objects.filter(date=target_date, status=True)
+        serializer = AttendanceSerializer(attendance, many=True)
+        return Response(serializer.data)
