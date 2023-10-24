@@ -2,7 +2,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
-from datetime import datetime
+from datetime import datetime,timedelta
+from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 # START MAIN ALGORITMS HOME PAGE #
 # START API VIEW #
@@ -19,25 +21,36 @@ def filter_patients_created_within_1_days(request):
 @api_view(['GET'])
 def filter_patients_created_within_30_days(request):
     current_datetime = datetime.now()
-    start_datetime = current_datetime - timedelta(days=30)
-    patients = Patient.objects.filter(created_at__range=(start_datetime, current_datetime))
-    ser = PatientSerializers(patients, many=True)
+    a = current_datetime.strftime("%m")
+    patient = Patient.objects.all()
+    monthly_patient = []
+    for i in patient:
+        b = str(i.created_at)[5:7]
+        if int(b) == int(a):
+            monthly_patient.append(i)
+    ser = PatientSerializers(monthly_patient, many=True)
     return Response(ser.data)
 
 
 @api_view(['GET'])
 def filter_patients_created_within_365_days(request):
     current_datetime = datetime.now()
-    start_datetime = current_datetime - timedelta(days=365)
-    patients = Patient.objects.filter(created_at__range=(start_datetime, current_datetime))
-    ser = PatientSerializers(patients, many=True)
+    a = current_datetime.strftime("%Y")
+    patient = Patient.objects.all()
+    year_patient = []
+    for i in patient:
+        b = str(i.created_at)[:5]
+        if int(b) == int(a):
+            year_patient.append(i)
+    ser = PatientSerializers(year_patient, many=True)
     return Response(ser.data)
 
 
 @api_view(['GET'])
 def created_count_total_patients(request):
-    total_patients = Patient.objects.aggregate(total=Count('pk'))
-    return Response(total_patients)
+        patients = Patient.objects.all()
+        ser = PatientSerializers(patients, many=True)
+        return Response(ser.data)
 
 # END PATIENT NUMBER API #
 
@@ -45,34 +58,44 @@ def created_count_total_patients(request):
 @api_view(['GET'])
 def filter_report_created_within_1_days(request):
     current_datetime = datetime.now()
-    start_datetime = current_datetime - timedelta(days=1)
-    reports = Report.objects.filter(data__range=current_datetime)
-    ser = PatientSerializers(reports, many=True)
+    reports = Report.objects.filter(created_at=current_datetime)
+    ser = ReportSerializers(reports, many=True)
     return Response(ser.data)
 
 
 @api_view(['GET'])
 def filter_report_created_within_30_days(request):
     current_datetime = datetime.now()
-    start_datetime = current_datetime - timedelta(days=30)
-    reports = Report.objects.filter(data__range=(start_datetime, current_datetime))
-    ser = PatientSerializers(reports, many=True)
+    a = current_datetime.strftime("%m")
+    report = Report.objects.all()
+    monthly_report = []
+    for i in report:
+        b = str(i.created_at)[5:7]
+        if int(b) == int(a):
+            monthly_report.append(i)
+    ser = ReportSerializers(monthly_report, many=True)
     return Response(ser.data)
 
 
 @api_view(['GET'])
 def filter_report_created_within_365_days(request):
     current_datetime = datetime.now()
-    start_datetime = current_datetime - timedelta(days=365)
-    reports = Report.objects.filter(data__range=(start_datetime, current_datetime))
-    ser = PatientSerializers(reports, many=True)
+    a = current_datetime.strftime("%Y")
+    report = Report.objects.all()
+    year_report = []
+    for i in report:
+        b = str(i.created_at)[:5]
+        if int(b) == int(a):
+            year_report.append(i)
+    ser = ReportSerializers(year_report, many=True)
     return Response(ser.data)
 
 
 @api_view(['GET'])
 def created_count_total_report(request):
-    total_reports = Report.objects.aggregate(total=Count('pk'))
-    return Response(total_reports)
+    reports = Report.objects.all()
+    ser = ReportSerializers(reports, many=True)
+    return Response(ser.data)
 
 # END REPORT API #
 
@@ -96,21 +119,26 @@ def filter_employee_by_name(request):
 # END EMPLOYEE BY_NAME FILTERS API#
 
 # START EMPLOYYE BY_SPECIALTY FILTERS API #
+
 @api_view(['GET'])
 def filter_employee_by_specialty(request):
     specialty = request.GET.get('specialty')
-    employees = Employee.objects.filter(employee_specialty=specialty)
-    serializer = EmployeeSerializer(employees, many=True)
-    return Response(serializer.data)
+    if not specialty:
+        employees = Employee.objects.all()
+    else:
+        employees = Employee.objects.filter(specialty=specialty)
+    serializer = EmployeeSerializers(employees, many=True)
+    data = [{"name": employee.name, "specialty": employee.specialty} for employee in employees]
+    return Response(data)
 
 # END EMPLOYYE BY _SPECIALTY FILTERS API #
 
 # START EMPLOYYE BY_STATUS FILTERS API #
 @api_view(['GET'])
 def filter_employee_by_status(request):
-    employee_status = request.GET.get('employee_status')
-    employees = Employee.objects.filter(employye_status=status)
-    ser = EmployeeSerializer(employees, many=True)
+    status = request.GET.get('status')
+    employees = Employee.objects.filter(status=status)
+    ser = EmployeeSerializers(employees, many=True)
     return Response(ser.data)
 
 # END EMPLOYEE BY_STATUS FILTERS API #
@@ -119,7 +147,7 @@ def filter_employee_by_status(request):
 @api_view(['GET'])
 def filter_employee_by_rooms(request):
     room = request.GET.get('room')
-    employees = Employee.objects.filter(employye_room=room)
+    employees = Employee.objects.filter(room=room)
     ser =  EmployeeSerializers(employees, many=True)
     return Response(ser.data)
 
@@ -137,12 +165,18 @@ def filter_employee_by_time(request):
 # END EMPLOYEE BY_TIME FILTERS API #
 
 # START EMPLOYEE BY_SECTION FILTERS API #
+
 @api_view(['GET'])
 def filter_employee_by_section(request):
     section = request.GET.get('section')
-    employees = Employee.objects.filter(room_section=section)
-    serializer = EmployeeSerializer(employees, many=True)
-    return Response(serializer.data)
+    employees = Employee.objects.filter(room__section=section)
+    data = []
+    for employee in employees:
+        if employee.room:
+            data.append({"name": employee.name, "room": employee.room.name, "section": employee.room.section})
+        else:
+            data.append({"name": employee.name, "room": None, "section": None})
+    return Response(data)
 
 # END EMPLOYEE BY_SECTION FILTERS API #
 
@@ -168,7 +202,7 @@ def get_all_rooms(request):
 def filter_rooms_by_capacity(request):
     room_capacity = request.GET.get('room_capacity')
     rooms = Room.objects.filter(room_capacity=room_capacity)
-    ser =  RoomSerializers(rooms, many=True)
+    ser = RoomSerializers(rooms, many=True)
     return Response(ser.data)
 
 # END ROOMS FILTERS BY_CAPACTIY API #
@@ -176,8 +210,8 @@ def filter_rooms_by_capacity(request):
 # START FILTERS BY_GENDER API #
 @api_view(['GET'])
 def filter_rooms_by_gender(request):
-    gender = request.GET.get('patient_gender')
-    rooms = Room.objects.filter(patient_gender=gender)
+    gender = request.GET.get('gender')
+    rooms = Room.objects.filter(patient__gender=gender)
     ser = RoomSerializers(rooms, many=True)
     return Response(ser.data)
 
@@ -206,7 +240,7 @@ def filter_rooms_by_name(request):
 # START ROOMS FILTERS BY_CATEGORY API #
 @api_view(['GET'])
 def filter_rooms_by_category(request):
-    category = request.GET.get(' category')
+    category = request.GET.get('category')
     rooms = Room.objects.filter(category=category)
     ser = RoomSerializers(rooms, many=True)
     return Response(ser.data)
@@ -233,7 +267,7 @@ def filter_rooms(request):
         return Response({"error": "Minimum and maximum prices are required."})
 
     rooms = Room.objects.filter(price__range=[min_price, max_price], is_booked=False)
-    ser = RoomSerializer(rooms, many=True)
+    ser = RoomSerializers(rooms, many=True)
     return Response(ser.data)
 
 # END ROOMS FILTERS BY_PRICE API #
@@ -285,9 +319,10 @@ def filter_patient_by_name(request):
 @api_view(['GET'])
 def search_employees_diagnos(request):
     diagnos = request.GET.get('diagnos')
-    employees = Employee.objects.filter(diagnos__icontains=diagnos)
-    ser = EmployeeSerializer(employees, many=True)
+    employees = Employee.objects.filter(name__icontains=diagnos)
+    ser = EmployeeSerializers(employees, many=True)
     return Response(ser.data)
+
 # END PATIENT SEARCH DIAGNOST API #
 
 # START PATIENT FILTERS BY_GENDER API #
@@ -302,10 +337,10 @@ def filter_patient_by_gender(request):
 
 # START PATIENT FILTERS BY_ROOM API #
 @api_view(['GET'])
-def filter_patient_by_room(request):
+def filter_patients_by_room(request):
     room = request.GET.get('room')
-    patient = Patient.objects.filter(room=room)
-    ser = PatientSerializers(patient, many=True)
+    patients = Patient.objects.filter(room=room)
+    ser = PatientSerializers(patients, many=True)
     return Response(ser.data)
 
 # END PATIENT FILTERS BY_ROOM API #
@@ -322,9 +357,10 @@ def filter_patient_by_doctor(request):
 
 # START PATIENT FILTERS BY_CREATE_AT API #
 @api_view(['GET'])
-def filter_patient_by_create_at(request):
-    create_at = request.GET.get('create_at')
-    patients = Patient.objects.filter(create_at=create_at)
+def filter_patients_by_create_at(request, pk):
+    patient = Patient.objects.get(pk=pk)
+    created_at = patient.created_at
+    patients = Patient.objects.filter(created_at=created_at)
     ser = PatientSerializers(patients, many=True)
     return Response(ser.data)
 
@@ -353,62 +389,140 @@ def search_patient_name(request):
 
 # END PATIENT  SEARCH NAME  API #
 
-# START ATTENDENCE FILTER STATUS API #
-@api_view(['GET'])
-def filter_attendance_by_status(request):
-        attendance = Attendance.objects.all()
-        ser = AttendanceSerializers(attendance, many=True)
-        attendance_data = ser.data
-        for attendance in attendance_data:
-            status = "Came" if attendance['status'] else "Did not come"
-            attendance.update({
-                "status": status
-            })
-        return Response(ser.data)
+# START ATTENDENCE FILTER STATUS DAY API #
 
-# END ATTENDENCE FILTER STATUS API #
-
-# START ATTENDENCE FILTER STATUS API #
 @api_view(['GET'])
-def filter_attendance_by_status_day(request):
+def filter_attendance_by_status_date(request):
+    target_date = timezone.now().date() - timedelta(days=1)
     attendance = Attendance.objects.filter(date=target_date)
-    day = int(day)
-    today = date.today()
-    target_date = today.replace(day=day)
+    if not attendance:
+        return Response({'ok'})  # Bo'sh ro'yhatni qaytarish
     ser = AttendanceSerializers(attendance, many=True)
-    attendance.data = ser.data
-    for attendance in attendance_data:
-        attendance['status'] = "Came" if attendance['status'] else "Did not come"
-
+    for record in ser.data:
+        record['status'] = "Came" if record['status'] else "Did not come"
     return Response(ser.data)
 
 
 @api_view(['GET'])
-def filter_attendance_by_status_day_Came(request, day):
-    day = int(day)
-    today = datetime.today()
-    target_date = today.replace(day=day)
-    attendance = Attendance.objects.filter(date=target_date)
+def filter_attendance_by_status_date_come_true(request):
+    last_24_hours = timezone.now() - timedelta(hours=24)
+    attendance = Attendance.objects.filter(date__gte=last_24_hours, status=True)
     ser = AttendanceSerializers(attendance, many=True)
-    attendance_data = ser.data
-    for attendance in attendance_data:
-        attendance['status'] = "Came" if attendance['status'] else "Did not come"
-
-    return Response(attendance_data)
-
-@api_view(['GET'])
-def filter_attendance_by_status_day_true_come(request, day):
-        day = int(day)
-        target_date = date.today().replace(day=day)
-        attendance = Attendance.objects.filter(date=target_date, status=True)
-        serializer = AttendanceSerializer(attendance, many=True)
-        return Response(serializer.data)
+    return Response(ser.data)
 
 
 @api_view(['GET'])
-def filter_attendance_by_status_day_false_come(request, day):
-        day = int(day)
-        target_date = date.today().replace(day=day)
-        attendance = Attendance.objects.filter(date=target_date, status=True)
-        serializer = AttendanceSerializer(attendance, many=True)
-        return Response(serializer.data)
+def filter_attendance_by_status_day_false_come(request):
+    last_24_hours = timezone.now() - timedelta(hours=24)
+    attendance = Attendance.objects.filter(date__gte=last_24_hours, status=False)
+    ser = AttendanceSerializers(attendance, many=True)
+    return Response(ser.data)
+
+@api_view(['GET'])
+def filter_attendance_by_status_monthly(request,pk):
+    last_30_days = timezone.now() - timedelta(days=30)
+    attendance = Attendance.objects.filter(date__gte=last_30_days)
+    ser = AttendanceSerializers(attendance, many=True)
+    return Response(ser.data)
+
+@api_view(['GET'])
+def filter_attendance_by_employee_last_30_days(request, doctor):
+    employee_attendance = Attendance.objects.filter(pk=doctor)
+    last_30_days = timezone.now() - timedelta(days=30)
+    recent_attendance = employee_attendance.filter(date__gte=last_30_days)
+    ser = AttendanceSerializers(recent_attendance, many=True)
+    return Response(ser.data)
+
+# END ATTENDENCE FILTER STATUSC DAY API #
+
+# STAR CASSA API #
+@api_view(['GET'])
+def get_cassa_balance(request, password):
+    try:
+        cassa = Cassa.objects.get(password=password)
+        ser = CassaSerializers(cassa)
+        return Response(ser.data)
+    except Cassa.DoesNotExist:
+        return Response({'message': 'Code not found'})
+
+# END CASSA API #
+
+# START INFIRMATIONS API #
+@api_view(['GET'])
+def informations_get_all(request):
+    informations = Informations.objects.all()
+    ser = InformationsSerializers(informations)
+    return Response(ser.data)
+
+# END INFIRMATIONS API #
+
+# START PAYMENT API #
+@api_view(['GET'])
+def daily_payments(request):
+    current_datetime = datetime.now()
+    start_datetime = current_datetime - timedelta(hours=24)
+    payments = Payment.objects.filter(created_at__gte=start_datetime, created_at__lte=current_datetime)
+    serializer = PaymentSerializers(payments, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def date_filtered_payments(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    payments = Payment.objects.filter(created_at__range=[start_date, end_date])
+    serializer = PaymentSerializers(payments, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def code_filtered_payments(request, code):
+    payments = Payment.objects.filter(code=code)
+    serializer = PaymentSerializers(payments, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def all_payments(request):
+    payments = Payment.objects.all()
+    ser = PaymentSerializers(payments, many=True)
+    return Response(ser.data)
+
+# END PAYMENT API #
+
+# START OPERATIONS API #
+@api_view(['GET'])
+def all_doctors_in_operations(request):
+    operations = Operation.objects.all()
+    doctors = Employee.objects.filter(operation__in=operations)
+    ser = EmployeeSerializers(doctors, many=True)
+    return Response(ser.data)
+
+
+@api_view(['GET'])
+def all_transactions(request):
+    operations = Operation.objects.all()
+    ser = OperationSerializers(operations, many=True)
+    return Response(ser.data)
+
+# END OPERATION API #
+
+#START QUEUE API #
+@api_view(['GET'])
+def queues_by_doctor(reuest, pk):
+     patient_operations = Operation.objects.filter(pk=pk)
+     doctors = Employee.objects.filter(operation__in=patient_operations)
+     serializer = OperationSerializer(doctors, many=True)
+     return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_all_queue(request):
+    queues = Queue.objects.all()
+    serializer = QueueSerializers(queues, many=True)
+    return Response(serializer.data)
+
+#END  QUEUE API #
+
+# END MAIN ALGORITMS HOME PAGE #
+# END API VIEW #

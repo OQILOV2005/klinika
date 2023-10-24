@@ -26,7 +26,7 @@ class Employee(models.Model):
            message='Invalid phone number',
            code='invalid_number'
        ), ])
-   employee_status = models.IntegerField( blank=False, choices=(
+   status = models.IntegerField( blank=False, choices=(
        (1, "doktor"),
        (2, "admin"),
        (3, "boshqaruvchi"),
@@ -97,11 +97,11 @@ class Patient(models.Model):
         (2, "Male"),
 
     ))
-    diagnos = models.CharField(max_length=30,blank=False)
+    diagnos = models.CharField(max_length=50,blank=False)
     day = models.IntegerField(null=True,blank=True,verbose_name="bemorning' qancha kun dovolanishi")
     room = models.ForeignKey(to=Room, on_delete=models.SET_NULL, verbose_name="bemornig' xonasi", null=True, blank=True)
     doctor = models.ForeignKey(to=Employee, on_delete=models.CASCADE,verbose_name="bemornig' doktori")
-    created_at = models.DateField(auto_created=True,verbose_name="bemorning yaratilgan vaqti")
+    created_at = models.DateField(auto_now=True,verbose_name="bemorning yaratilgan vaqti")
     is_active = models.BooleanField(default=True)
     class Meta:
         verbose_name = 'Patient'
@@ -170,10 +170,9 @@ class Queue(models.Model):
 
 
 class Attendance(models.Model):
-    doctor = models.ForeignKey(to=Employee,on_delete=models.CASCADE,verbose_name= "Davomat uchun doktorni shaxsi ")
+    doctor = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name="Davomat uchun doktorni shaxsi")
+    date = models.DateField(auto_now=True)  # `date` maydoni to'g'ri nomlangan
     status = models.BooleanField(default=False)
-    day = models.DateField(auto_now=True)
-
     class Meta:
         verbose_name = 'Attendance'
         verbose_name_plural = 'Attendance'
