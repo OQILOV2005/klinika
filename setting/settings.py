@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main.apps.MainConfig',
     'rest_framework',
-    'drf_yasg'
+    'drf_yasg',
+    'rest_framework_simplejwt'
 ]
 
 MIDDLEWARE = [
@@ -125,3 +126,58 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 AUTH_USER_MODEL = 'main.User'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+from datetime import datetime,timedelta
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+
+    ),
+
+    "DETIME_FARMAT": "%Y-%m-%d %H:%M:%S",
+
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SIMPLE_JWT = {
+
+    "ACESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_RATATION": False,
+    "UPDATE_LIST_LOGIN": False,
+
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    # Optional configurations
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JSON_ENCODER": None,  # "django.core.serializers.json.DjangoJSONEncoder"#
+    "JWT_URL": None,
+    "LEEWAY": 0,
+
+
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+
+
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+
+    "JTI_CLAIM": "jti",
+
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refersh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+
+    "TOKEN_OBATIAN_SERIALIZER": "rest_framework_simplejwt.serilizers.TokenObatianPairSerilizer",
+    "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serilizers.TokenRefreshSerilizer",
+    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serilizers.TokenVerfiySerilizer",
+    "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serilizers.TokenBlacklistPairSerilizer",
+    "SLIDING_TOKEN_OBATIAN_SERIALIZER": "rest_framework_simplejwt.serilizers.TokenObatianSlidingSerilizer",
+    "SLIDING_TOKEN_REFRESH_SERIALIZER":"rest_framework_simplejwt.serilizers.TokenRefreshSlidingSerilizer",
+}

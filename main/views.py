@@ -12,16 +12,22 @@ from django.core.exceptions import ObjectDoesNotExist
 # START PATIENT NUMBERS API #
 @api_view(['GET'])
 def filter_patients_created_within_1_days(request):
-    current_datetime = datetime.now()
-    patients = Patient.objects.filter(created_at=current_datetime)
-    ser = PatientSerializers(patients, many=True)
+    current_datetime = request.GET.get('date')
+    a = str(current_datetime)[8:]
+    patient = Patient.objects.all()
+    day_patient = []
+    for i in patient:
+        b = str(i.created_at)[8:]
+        if int(b) == int(a):
+            day_patient.append(i)
+    ser = PatientSerializers(day_patient, many=True)
     return Response(ser.data)
 
 
 @api_view(['GET'])
 def filter_patients_created_within_30_days(request):
-    current_datetime = datetime.now()
-    a = current_datetime.strftime("%m")
+    current_datetime = request.GET.get('date')
+    a = str(current_datetime)[5:7]
     patient = Patient.objects.all()
     monthly_patient = []
     for i in patient:
@@ -34,12 +40,12 @@ def filter_patients_created_within_30_days(request):
 
 @api_view(['GET'])
 def filter_patients_created_within_365_days(request):
-    current_datetime = datetime.now()
-    a = current_datetime.strftime("%Y")
+    current_datetime = request.GET.get('date')
+    a = str(current_datetime)[:4]
     patient = Patient.objects.all()
     year_patient = []
     for i in patient:
-        b = str(i.created_at)[:5]
+        b = str(i.created_at)[:4]
         if int(b) == int(a):
             year_patient.append(i)
     ser = PatientSerializers(year_patient, many=True)
@@ -57,16 +63,22 @@ def created_count_total_patients(request):
 # START REPORT API #
 @api_view(['GET'])
 def filter_report_created_within_1_days(request):
-    current_datetime = datetime.now()
-    reports = Report.objects.filter(created_at=current_datetime)
+    current_datetime = request.GET.get('date')
+    a = str(current_datetime)[8:]
+    report = Report.objects.all()
+    day_report = []
+    for i in report:
+        b = str(i.created_at)[8:]
+        if int(b) == int(a):
+            day_report.append(i)
     ser = ReportSerializers(reports, many=True)
     return Response(ser.data)
 
 
 @api_view(['GET'])
 def filter_report_created_within_30_days(request):
-    current_datetime = datetime.now()
-    a = current_datetime.strftime("%m")
+    current_datetime = request.GET.get('date')
+    a = str(current_datetime)[5:7]
     report = Report.objects.all()
     monthly_report = []
     for i in report:
@@ -79,14 +91,14 @@ def filter_report_created_within_30_days(request):
 
 @api_view(['GET'])
 def filter_report_created_within_365_days(request):
-    current_datetime = datetime.now()
-    a = current_datetime.strftime("%Y")
+    current_datetime = request.GET.get('date')
+    a = str(current_datetime)[:4]
     report = Report.objects.all()
-    year_report = []
+    monthly_report = []
     for i in report:
-        b = str(i.created_at)[:5]
+        b = str(i.created_at)[:4]
         if int(b) == int(a):
-            year_report.append(i)
+            monthly_report.append(i)
     ser = ReportSerializers(year_report, many=True)
     return Response(ser.data)
 
@@ -158,7 +170,7 @@ def filter_employee_by_rooms(request):
 def filter_employee_by_time(request):
     start_time = request.GET.get('start_time')
     end_time = request.GET.get('end_time')
-    employees = Employee.objects.filter(start_time=start_time,end_time=end_time)
+    employees = Employee.objects.filter(start_time=start_time, end_time=end_time)
     ser =  EmployeeSerializers(employees, many=True)
     return Response(ser.data)
 
@@ -211,7 +223,10 @@ def filter_rooms_by_capacity(request):
 @api_view(['GET'])
 def filter_rooms_by_gender(request):
     gender = request.GET.get('gender')
-    rooms = Room.objects.filter(patient__gender=gender)
+    patients = Patient.objects.filter(gender=gender)
+    rooms = []
+    for i in patients:
+        rooms.append(i.room)
     ser = RoomSerializers(rooms, many=True)
     return Response(ser.data)
 
@@ -260,13 +275,9 @@ def filter_rooms_by_status(request):
 # START ROOMS FILTERS BY_PRICE API #
 @api_view(['GET'])
 def filter_rooms(request):
-    min_price = request.query_params.get('min_price')
-    max_price = request.query_params.get('max_price')
-
-    if not min_price or not max_price:
-        return Response({"error": "Minimum and maximum prices are required."})
-
-    rooms = Room.objects.filter(price__range=[min_price, max_price], is_booked=False)
+    min_price = request.POST.get('min_price')
+    max_price = request.POST.get('max_price')
+    rooms = Room.objects.filter(price__gte=min_price, price_lte=max_price)
     ser = RoomSerializers(rooms, many=True)
     return Response(ser.data)
 
@@ -317,10 +328,10 @@ def filter_patient_by_name(request):
 
 # START PATIENT SEARCH DIAGNOST API #
 @api_view(['GET'])
-def search_employees_diagnos(request):
+def search_patient_diagnos(request):
     diagnos = request.GET.get('diagnos')
-    employees = Employee.objects.filter(name__icontains=diagnos)
-    ser = EmployeeSerializers(employees, many=True)
+    patients = Patients.objects.filter(diagnos__icontains=diagnos)
+    ser = PatientSerializers(patients, many=True)
     return Response(ser.data)
 
 # END PATIENT SEARCH DIAGNOST API #
@@ -339,7 +350,7 @@ def filter_patient_by_gender(request):
 @api_view(['GET'])
 def filter_patients_by_room(request):
     room = request.GET.get('room')
-    patients = Patient.objects.filter(room=room)
+    patients = Patient.objects.filter(rooom_name__icontains=room)
     ser = PatientSerializers(patients, many=True)
     return Response(ser.data)
 
@@ -492,9 +503,9 @@ def all_payments(request):
 
 # START OPERATIONS API #
 @api_view(['GET'])
-def all_doctors_in_operations(request):
-    operations = Operation.objects.all()
-    doctors = Employee.objects.filter(operation__in=operations)
+def all_doctors_in_operations(request, pk):
+    operation = Operation.objects.get(pk=pk)
+    doctors = operation.doctors
     ser = EmployeeSerializers(doctors, many=True)
     return Response(ser.data)
 
@@ -509,10 +520,10 @@ def all_transactions(request):
 
 #START QUEUE API #
 @api_view(['GET'])
-def queues_by_doctor(reuest, pk):
-     patient_operations = Operation.objects.filter(pk=pk)
-     doctors = Employee.objects.filter(operation__in=patient_operations)
-     serializer = OperationSerializer(doctors, many=True)
+def queues_by_doctor(request, pk):
+     doctor = Employee.objects.get(pk=pk)
+     queus = Queue.objects.filter(doctor=doctor)
+     serializer = OperationSerializer(queus, many=True)
      return Response(serializer.data)
 
 
